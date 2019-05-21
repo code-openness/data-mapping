@@ -1,0 +1,4 @@
+wikidataintegrator
+pywikibot
+pandas
+tqdm
