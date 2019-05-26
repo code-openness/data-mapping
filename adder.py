@@ -2,6 +2,7 @@ import requests, ast, csv, sys
 import wikidataintegrator as WI
 
 """
+abgeändert von: "https://github.com/SemanticLab/data-2-wikibase/blob/master/add_items.py"
 In Arbeit
 erhält .csv file als Parameter und fügt alle Spalten zum Wiki (localhost) hinzu.
 csv Tabelle muss Zeile "Label" haben, erste Zeile sind die Keys [Form-Beispiel: "Label,P2:string,P4:item"]
@@ -73,7 +74,7 @@ if __name__ == "__main__":
 
         try:
             if not err:
-                wd_item = WI.wdi_core.WDItemEngine(core_props="P6", data=data, new_item=True, mediawiki_api_url=mediawiki_api_url, sparql_endpoint_url=sparql_endpoint_url)
+                wd_item = WI.wdi_core.WDItemEngine(data=data, new_item=True, mediawiki_api_url=mediawiki_api_url, sparql_endpoint_url=sparql_endpoint_url)
                 wd_item.set_label(row["Label"])
                 if "Description" in row:
                     wd_item.set_description(row["Description"])
