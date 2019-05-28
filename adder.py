@@ -1,4 +1,4 @@
-import requests, ast, csv, sys
+import requests, ast, csv, sys, os
 import wikidataintegrator as WI
 
 """
@@ -24,16 +24,18 @@ if __name__ == "__main__":
         raise ValueError('No input-file parameter')
     else:
         csv_path = str(sys.argv[1])
+        if not os.path.isfile(csv_path):
+            raise ValueError('Input Parameter: '+csv_path+" is no valid file.")
+        pw = []
         if len(sys.argv)>2:
             param = sys.argv[2:]
             pw = [o[3:] for o in param if o.startswith("pw:")]
-            password_file = "password" if len(pw)==0 else pw[-1]
+        password_file = "password" if len(pw)==0 else pw[-1]
 
     print(password_file)
 
     csv_file = open(csv_path,"r",encoding="UTF-8",errors="ignore")
     csv_dict = csv.DictReader(csv_file)
-
     with open(password_file,"r",encoding="UTF-8",errors="ignore") as f:
         data = f.readline().strip()
     name,pw = ast.literal_eval(data)
