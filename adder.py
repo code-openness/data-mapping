@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# -*- coding: latin-1 -*-
+
 import requests, ast, csv, sys, os
 import wikidataintegrator as WI
 
