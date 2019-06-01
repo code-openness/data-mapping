@@ -66,7 +66,7 @@ password_file.close()
 
 # setup login
 login_instance = WI.wdi_login.WDLogin(
-    user=auth_dict['username'], 
+    user=auth_dict['username'],
     pwd=auth_dict['password'],
     mediawiki_api_url=MEDIA_WIKI_API
 )
@@ -83,7 +83,7 @@ for fileIndex in range(len(item_files)):
     print("processing file ", fileName)
     items = pd.read_csv(fileName)
 
-    local_prop_ids = list(items.columns)[2:]  # ignore the columns id and label
+    local_prop_ids = list(items.columns)[2:] # ignore the columns id and label
     prop_types = list(map(lambda local_id: prop_map[local_id]['datatype'], local_prop_ids))
     PIDs = list(map(lambda local_id: prop_map[local_id]['PID'], local_prop_ids))
     #continue
@@ -97,7 +97,7 @@ for fileIndex in range(len(item_files)):
             value = row[local_prop_id]
             if is_nan(value):
                 continue
-            
+
             prop_type = prop_types[prop_index]
             PID = PIDs[prop_index]
             if prop_type == 'wikibase-item':
@@ -113,9 +113,9 @@ for fileIndex in range(len(item_files)):
                 data.append(WI.wdi_core.WDString(value=value, prop_nr=PID))
             else:
                 print("Ignoring unknown type:", prop_type, "with value", value) # add other types here
-        # this is copied from the turorial, the api is now a bit different
+        # this is copied from the tutorial, the api is now a bit different
         wd_item = WI.wdi_core.WDItemEngine(
-            data=data, 
+            data=data,
             mediawiki_api_url=MEDIA_WIKI_API,
             sparql_endpoint_url=SPARQL_ENDPOINT
         )
@@ -132,8 +132,3 @@ for fileIndex in range(len(item_files)):
     # after import is done, write back to new file
     items.to_csv('./data/saved_items_' + str(fileIndex) + '.csv', index=False)
     print("saved file ", './data/saved_items_' + str(fileIndex) + '.csv')
-
-
-
-
-

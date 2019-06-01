@@ -8,7 +8,7 @@ Git
 ### Try it out
 Make sure you have a clean WikiBase instance, no properties or items should be there.
 
-Write your bot's username and passwork in the `import.sh` file, and then simply execute the script:
+Write your bot's username and password in the `import.sh` file, and then simply execute the script:
 ```bash
 ./import.sh
 ```
