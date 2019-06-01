@@ -10,6 +10,7 @@ echo "WARN: This script only work with a clean wikibase, ot properties or items 
 echo "('$BOT_USERNAME','$BOT_PASSWORD')" > password
 echo "{\"username\":\"$BOT_USERNAME\", \"password\":\"$BOT_PASSWORD\"}" > password.json
 
+# you can replace python3 with any other version as long as it is > 3.4
 python3 -m venv import_env
 source import_env/bin/activate
 python3 -m pip install --upgrade pip
