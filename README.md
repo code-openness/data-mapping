@@ -8,11 +8,11 @@ Git
 ### Try it out
 Make sure you have a clean WikiBase instance, no properties or items should be there.
 
-To run, simply execute:
+Write your bot's username and passwork in the `import.sh` file, and then simply execute the script:
 ```bash
 ./import.sh
 ```
 
-The script will automatically download the SPARQL ready data from `https://github.com/code-openness/Data.git` and import it.
+The script will automatically download and install the dependencies and also download the SPARQL ready data from `https://github.com/code-openness/Data.git` and import it.
 
 NOTE: this script assumes all the data is new and does not exist in the database.
