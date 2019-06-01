@@ -2,7 +2,10 @@
 set -e
 # write bot name and pasword here, no quotaions " or '
 export BOT_USERNAME=pik
-export BOT_PASSWORD=bot@rmj5c9dhv4k5gojmpk3bt4i064qj1ca9
+export BOT_PASSWORD=bot@lqv7ddmf48faagqh2e4akt4g10120pfq
+
+echo "Importing using the username: $BOT_USERNAME"
+echo "WARN: This script only work with a clean wikibase, ot properties or items should be in the database"
 
 echo "('$BOT_USERNAME','$BOT_PASSWORD')" > password
 echo "{\"username\":\"$BOT_USERNAME\", \"password\":\"$BOT_PASSWORD\"}" > password.json
