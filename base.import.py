@@ -87,9 +87,6 @@ for fileIndex in range(len(item_files)):
 
 
     new_QIDS = []
-    # add empty column for the new QID
-    items.loc[:, 'QID'] = pd.Series([np.nan] * len(items.index), index=items.index)
-
     for index, row in items.iterrows():
         label = row['label']
         if is_nan(label):
@@ -139,7 +136,7 @@ for fileIndex in range(len(item_files)):
     items['QID'] = pd.Series(new_QIDS, index=items.index)
     items.to_csv('./data/saved_items_' + str(fileIndex) + '.csv', index=False)
     print("saved file ", './data/saved_items_' + str(fileIndex) + '.csv')
-
+print("import done")
 
 
 
