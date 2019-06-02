@@ -52,7 +52,7 @@ if __name__ == "__main__":
         row = dict(row)
         data = []
         err = False
-        if not "Label" in row:
+        if not "label" in row:
             err = True
         try:
             for key in row:
@@ -80,14 +80,14 @@ if __name__ == "__main__":
         try:
             if not err:
                 wd_item = WI.wdi_core.WDItemEngine(data=data, new_item=True, mediawiki_api_url=mediawiki_api_url, sparql_endpoint_url=sparql_endpoint_url)
-                wd_item.set_label(row["Label"])
+                wd_item.set_label(row["label"])
                 if "Description" in row:
                     wd_item.set_description(row["Description"])
 
                 r = wd_item.write(login_instance)
 
                 row["QID"] = r
-                print("ADDED: "+str(row["Label"])+" as: "+str(r))
+                print("ADDED: "+str(row["label"])+" as: "+str(r))
 
         except Exception as e:
             print("Skipping this one...")
