@@ -3,20 +3,16 @@ tools to add data to the wiki
 
 ### Requirements
 Python 3.7.x
+Git
 
 ### Try it out
-We recommend to install a virtual environment.
-Create and activate the virtual environment
+Make sure you have a clean WikiBase instance, no properties or items should be there.
 
-    python -m venv env
-    source env/bin/activate
+Write your bot's username and password in the `import.sh` file, and then simply execute the script:
+```bash
+./import.sh
+```
 
-Install dependencies
+The script will automatically download and install the dependencies and also download the SPARQL ready data from `https://github.com/code-openness/Data.git` and import it.
 
-    python -m pip install -r requirements.txt
-
-### Reset
-Deactivate and remove the virtual environment
-
-    deactivate
-    rm -rf env
+NOTE: this script assumes all the data is new and does not exist in the database.
