@@ -1,2 +1,10 @@
 /.vscode
 /import_env
+/apicache-py3/
+/data/   
+/import.py
+/password
+/pywikibot.lwp
+/throttle.ctrl
+/user-config.py
+
