@@ -15,15 +15,7 @@ max_threads = 30
 # overwrite the wait function
 def wait(self, secs):
     pass
-
-def threader(thread_list):
-	for a in thread_list:
-		while len([True for b in thread_list if b.is_alive()]) >= max_threads:
-			time.sleep(0.1)
-		a.start()
-	while not len([None for a in thread_list if a.is_alive()]) == 0:
-		time.sleep(0.1)
-
+"""
 prop_map = {}
 props = pd.read_csv('./data/saved_properties.csv')
 for _, row in props.iterrows():
@@ -76,7 +68,7 @@ props.to_csv('./data/saved_properties.csv', index=False)
 print("saved properties")
 print("imported props", prop_map)
 # import items
-"""
+
 
 # setup wikidata integrator
 MEDIA_WIKI_API = 'http://localhost:8181/w/api.php'
@@ -94,6 +86,7 @@ def is_nan(x):
 
 item_files = glob.glob('./data/items_*.csv')
 item_map = {}
+DONE, all_run = False, False
 
 for fileIndex in range(len(item_files)):
     fileName = './data/items_' + str(fileIndex) + '.csv'
@@ -104,9 +97,31 @@ for fileIndex in range(len(item_files)):
     prop_types = list(map(lambda local_id: prop_map[local_id]['datatype'], local_prop_ids))
     PIDs = list(map(lambda local_id: prop_map[local_id]['PID'], local_prop_ids))
 
-    threads = []
 
+    threads = []
     new_data = []
+
+    DONE, all_run = False, False
+    def bg_thread():
+        global DONE, all_run
+        i = 0
+        all_run = False
+        while not all_run:
+            alive = len([o for o in threads if o.is_alive()])
+            while alive > 30:
+                time.sleep(0.1)
+            if i+1<=len(threads):
+                threads[i].start()
+                i+=1
+            else:
+                time.sleep(0.05)
+            if DONE and i+1>=len(threads) and alive == 0:
+                all_run=True
+
+    bg_t = threading.Thread(target=bg_thread)
+    bg_t.daemon = True # daemon thread beendet wenn programm beendet ist
+    bg_t.start()
+
     for index, row in items.iterrows():
         label = row['label']
         if is_nan(label):
@@ -141,35 +156,29 @@ for fileIndex in range(len(item_files)):
             data=data,
             mediawiki_api_url=MEDIA_WIKI_API,
             sparql_endpoint_url=SPARQL_ENDPOINT,
-            new_item=True,
-            core_props="P1",
         )
 
         wd_item.set_label(label)
-        # write to database
-        #QID = wd_item.write(login_instance)
-        # save new QID to file and map
-        #new_QIDS.append(QID)
-
         local_id = row['id']
 
-
-        def thread_function(wd_item, index, local_id, new_data):
+        def thread_function(_wd_item, _index, _local_id, _new_data):
             global item_map
-            QID = wd_item.write(login_instance)
-            new_data.append([index, local_id, QID])
-            item_map[local_id] = QID
-            print(local_id, QID)
+            QID = _wd_item.write(login_instance)
+            new_data.append([_index, _local_id, _QID])
+            item_map[_local_id] = QID
+            print("Added: "+str(QID)+" |",_local_id)
+
         t = threading.Thread(target=thread_function,args=[wd_item, index, local_id, new_data])
         threads.append(t)
-        t.start()
         print("threads append: ", local_id)
 
-    while len([o for o in threads if o.is_alive()])!=0:
+    DONE = True # alle threads wurden in die liste threads geschrieben
+    while not all_run: #bg_thread setzt all_run auf True wenn alle Threads ausgeführt wurden
         time.sleep(0.1)
+
     new_data.sort(key=lambda x: x[0])
-    #for _id, _local_id, _QID in new_data:
-    #    item_map[_local_id] = _QID
+    for _id, _local_id, _QID in new_data:
+        item_map[_local_id] = _QID
     new_data = pd.DataFrame(new_data, columns=['i', 'local_id', 'QID'])
     # after import is done, write back to new file
     items['QID'] = new_data['QID']
