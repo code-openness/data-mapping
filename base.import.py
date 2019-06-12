@@ -164,7 +164,7 @@ for fileIndex in range(len(item_files)):
         def thread_function(_wd_item, _index, _local_id, _new_data):
             global item_map
             QID = _wd_item.write(login_instance)
-            new_data.append([_index, _local_id, _QID])
+            new_data.append([_index, _local_id, QID])
             item_map[_local_id] = QID
             print("Added: "+str(QID)+" |",_local_id)
 
