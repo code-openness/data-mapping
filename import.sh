@@ -3,7 +3,7 @@ set -e
 
 # write bot name and pasword here, no quotaions " or '
 export BOT_USERNAME=Pik
-export BOT_PASSWORD=bot@epuv8vgqr2crbkfn254lfqm880sc5fiv
+export BOT_PASSWORD=password123
 export MEDIA_WIKI_SERVER=http://localhost:8181
 export MEDIA_WIKI_API=$MEDIA_WIKI_SERVER/w/api.php
 export SPARQL_ENDPOINT=http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql
