@@ -2,8 +2,8 @@
 set -e
 
 # write bot name and pasword here, no quotaions " or '
-export BOT_USERNAME=pik
-export BOT_PASSWORD=bot@6i04r4eild1h2hanre2qtqko7vq162jd
+export BOT_USERNAME=Pik
+export BOT_PASSWORD=bot@epuv8vgqr2crbkfn254lfqm880sc5fiv
 export MEDIA_WIKI_SERVER=http://localhost:8181
 export MEDIA_WIKI_API=$MEDIA_WIKI_SERVER/w/api.php
 export SPARQL_ENDPOINT=http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql
@@ -15,16 +15,16 @@ echo "('$BOT_USERNAME','$BOT_PASSWORD')" > password
 envsubst < base.import.py > import.py
 envsubst < base.user-config.py > user-config.py
 
-#python3 -m venv import_env
-#source import_env/bin/activate
-#python3 -m pip install --upgrade pip
-#python3 -m pip install  -r requirements.txt
+python3 -m venv import_env
+source import_env/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install  -r requirements.txt
 
-#git clone -b sparql --single-branch https://github.com/code-openness/Data.git cloned
+git clone -b sparql --single-branch https://github.com/code-openness/Data.git cloned
 
-#mkdir -p data
-#cp -r ./cloned/raw/sparql/*.csv ./data
-#rm -r -f ./cloned
+mkdir -p data
+cp -r ./cloned/raw/sparql/*.csv ./data
+rm -r -f ./cloned
 
 python3 import.py
 
