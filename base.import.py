@@ -107,8 +107,7 @@ for fileIndex in range(len(item_files)):
         i = 0
         all_run = False
         while not all_run:
-            alive = len([o for o in threads if o.is_alive()])
-            while alive > 30:
+            while len([o for o in threads if o.is_alive()]) > 30:
                 time.sleep(0.1)
             if i+1<=len(threads):
                 threads[i].start()
