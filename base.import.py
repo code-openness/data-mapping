@@ -23,7 +23,7 @@ site.login()
 
 prop_map = {}
 
-props = pd.read_csv('./data/properties.csv')
+props = pd.read_csv('./data/properties.csv', dtype=object)
 new_PIDS = []
 for _, row in props.iterrows():
     datatype = row['data_type']
@@ -79,7 +79,7 @@ item_map = {}
 for fileIndex in range(len(item_files)):
     fileName = './data/items_' + str(fileIndex) + '.csv'
     print("processing file ", fileName)
-    items = pd.read_csv(fileName)
+    items = pd.read_csv(fileName, dtype=object)
 
     local_prop_ids = list(items.columns)[2:]  # ignore the columns id and label
     prop_types = list(map(lambda local_id: prop_map[local_id]['datatype'], local_prop_ids))

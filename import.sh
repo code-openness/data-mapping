@@ -3,7 +3,7 @@ set -e
 
 # write bot name and pasword here, no quotaions " or '
 export BOT_USERNAME=pik
-export BOT_PASSWORD=bot@gg1bn26bemmq5i16ua0u242crat8mbjq
+export BOT_PASSWORD=password123
 export MEDIA_WIKI_SERVER=http://localhost:8181
 export MEDIA_WIKI_API=$MEDIA_WIKI_SERVER/w/api.php
 export SPARQL_ENDPOINT=http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql
@@ -20,7 +20,7 @@ source import_env/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install  -r requirements.txt
 
-git clone -b sparql --single-branch https://github.com/code-openness/Data.git cloned
+git clone -b sparql_2 --single-branch https://github.com/code-openness/Data.git cloned
 
 mkdir -p data
 cp -r ./cloned/raw/sparql/*.csv ./data
