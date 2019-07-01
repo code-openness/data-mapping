@@ -2,7 +2,7 @@
 set -e
 
 # write bot name and pasword here, no quotaions " or '
-export BOT_USERNAME=pik
+export USERNAME=pik
 export BOT_PASSWORD=password123
 export MEDIA_WIKI_SERVER=http://localhost:8181
 export MEDIA_WIKI_API=$MEDIA_WIKI_SERVER/w/api.php
@@ -23,7 +23,7 @@ python3 -m pip install  -r requirements.txt
 git clone -b sparql_2 --single-branch https://github.com/code-openness/Data.git cloned
 
 mkdir -p data
-cp -r ./cloned/raw/sparql/*.csv ./data
+cp -r ./cloned/sparql/sparql/*.csv ./data
 rm -r -f ./cloned
 
 python3 import.py
