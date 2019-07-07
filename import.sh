@@ -2,7 +2,7 @@
 set -e
 
 # write bot name and pasword here, no quotaions " or '
-export USERNAME=pik
+export BOT_USERNAME=pik
 export BOT_PASSWORD=password123
 export MEDIA_WIKI_SERVER=http://localhost:8181
 export MEDIA_WIKI_API=$MEDIA_WIKI_SERVER/w/api.php
