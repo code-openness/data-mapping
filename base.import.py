@@ -6,7 +6,7 @@ import glob
 import requests
 import re
 import wikidataintegrator as WI
-import sys
+import sys, os
 from pathlib import Path
 
 
@@ -19,7 +19,8 @@ site = pywikibot.Site('wikidata', 'wikidata')
 site.login()
 
 # import properties
-def import_properties(load_from_csv_file='./data/properties.csv',save_csv_file='./data/saved_properties.csv', save_prop_map_json="./data/prop_map.json"):
+def import_properties(load_from_csv_file='./data/properties.csv',
+        save_csv_file='./data/saved_properties.csv', save_prop_map_json="./data/prop_map.json"):
     prop_map = {}
     props = pd.read_csv(load_from_csv_file, dtype=object)
 
@@ -63,7 +64,7 @@ def save_json(json_file, dict):
 def load_json(json_file):
     if not os.path.isfile(json_file):
         return {}
-    with open(json_file, "w") as f:
+    with open(json_file, "r") as f:
         data = f.read()
     return json.loads(data)
 
@@ -71,7 +72,8 @@ def load_json(json_file):
 def is_nan(x):
     return (x is np.nan or x != x)
 
-def write_item(wd_item, label, item_map, login_instance, local_id=None, standard_QID_output_file='./data/saved_items.csv'):
+def write_item(wd_item, label, item_map, login_instance, local_id=None,
+        standard_QID_output_file='./data/saved_items.csv'):
     QID = wd_item.write(login_instance)
     if not local_id == None:
         item_map[local_id] = QID # add QID to the item_map
@@ -81,7 +83,8 @@ def write_item(wd_item, label, item_map, login_instance, local_id=None, standard
     return QID
 
 def import_items_from_file(csv_file, prop_map, item_map, login_instance,
-        MEDIA_WIKI_API="http://localhost:8181/w/api.php", SPARQL_ENDPOINT="http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql",):
+        MEDIA_WIKI_API="http://localhost:8181/w/api.php",
+        SPARQL_ENDPOINT="http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql",):
     items = pd.read_csv(csv_file, dtype=object)
     local_prop_ids =    list(items.columns)[2:]  # ignore the columns id and label
 
@@ -96,13 +99,14 @@ def import_items_from_file(csv_file, prop_map, item_map, login_instance,
         for prop in local_prop_ids:
             if prop not in prop_map:
                 print("Property '" +prop+ "' not in prop_map, skipping property for item: "+label)
+                print(prop_map)
                 continue
             value = row[prop]
             if value is np.nan:
                 print("Value of Property '" +prop+ "' is empty, skipping for item: "+label)
                 continue
-            prop_type = prop["datatype"]
-            prop_PID  = prop["PID"]
+            prop_type = prop_map[prop]["datatype"]
+            prop_PID  = prop_map[prop]["PID"]
             if prop_type == "wikibase-item":
                 # we split because it can be multiple values, separated by semicolon
                 values = [val.strip() for val in value.split(";")]
@@ -122,7 +126,8 @@ def import_items_from_file(csv_file, prop_map, item_map, login_instance,
         wd_item = WI.wdi_core.WDItemEngine(
             data=data,
             mediawiki_api_url=MEDIA_WIKI_API,
-            sparql_endpoint_url=SPARQL_ENDPOINT
+            #sparql_endpoint_url=SPARQL_ENDPOINT
+            core_props="P1", new_item=True
         )
         wd_item.set_label(label)
         row["QID"] = write_item(wd_item, label, item_map, login_instance, local_id=row["id"])
@@ -133,6 +138,9 @@ def import_items_from_file(csv_file, prop_map, item_map, login_instance,
 
 
 if __name__ == "__main__":
+    param = ""
+    if len(sys.argv)>1:
+        param = sys.argv[1]
     from parameters import BOT_USERNAME, BOT_PASSWORD, MEDIA_WIKI_API, MEDIA_WIKI_SERVER, SPARQL_ENDPOINT
     to_import = "./data/"
     if not os.path.exists(to_import):
@@ -141,12 +149,15 @@ if __name__ == "__main__":
     if not os.path.isfile(property_file):
         raise ValueError(property_file + "is not a valid file")
     if os.path.isdir(to_import):
-        item_files = [os.dirname(to_import)+"/"+o for o in os.listdir(to_import) if o.endswith(".csv")] # all csv-files to be imported
+        item_files = [os.path.dirname(to_import)+"/"+o for o in os.listdir(to_import) if o.endswith(".csv")] # all csv-files to be imported
     item_map = {}
-    prop_map = import_properties()
+    if "-noprop" in param:
+        prop_map = load_json("./data/prop_map.json")
+    else:
+        prop_map = import_properties()
     login_instance = WI.wdi_login.WDLogin(
-        user='BOT_USERNAME',
-        pwd='BOT_PASSWORD',
+        user=BOT_USERNAME,
+        pwd=BOT_PASSWORD,
         mediawiki_api_url=MEDIA_WIKI_API
     )
     for file in item_files:
