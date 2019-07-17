@@ -14,130 +14,143 @@ from pathlib import Path
 def wait(self, secs):
     pass
 
-
 pywikibot.throttle.Throttle.wait = wait
 site = pywikibot.Site('wikidata', 'wikidata')
 site.login()
 
 # import properties
+def import_properties(load_from_csv_file='./data/properties.csv',save_csv_file='./data/saved_properties.csv', save_prop_map_json="./data/prop_map.json"):
+    prop_map = {}
+    props = pd.read_csv(load_from_csv_file, dtype=object)
 
-prop_map = {}
-
-props = pd.read_csv('./data/properties.csv', dtype=object)
-new_PIDS = []
-for _, row in props.iterrows():
-    datatype = row['data_type']
-    label = row['label']
-    data = {
-        'datatype': datatype,
-        'labels': {
-            'en': {
-                'language': 'en',
-                'value': label
+    props.insert(0,"PID","")
+    for _, row in props.iterrows():
+        datatype = row['data_type']
+        label = row['label']
+        data = {
+            'datatype': datatype,
+            'labels': {
+                'en': {
+                    'language': 'en',
+                    'value': label
+                }
             }
         }
-    }
-    params = {
-        'action': 'wbeditentity',
-        'new': 'property',
-        'data': json.dumps(data),
-        'summary': 'bot adding in properties',
-        'token': site.tokens['edit']
-    }
-    req = site._simple_request(**params)
-    results = req.submit()
+        params = {
+            'action': 'wbeditentity',
+            'new': 'property',
+            'data': json.dumps(data),
+            'summary': 'bot adding in properties',
+            'token': site.tokens['edit']
+        }
+        req = site._simple_request(**params)
+        results = req.submit()
 
-    PID = results['entity']['id']
-    new_PIDS.append(PID)
-    prop_map[row['id']] = {'datatype': datatype, 'PID': PID}
-    print(PID, label)
+        PID = results['entity']['id']
+        row["PID"] = PID
+        prop_map[row['id']] = {'datatype': datatype, 'PID': PID}
+        print(" "*(14-len(PID)) + PID + " : " + label)
 
+    props.to_csv(save_csv_file, index=False)
+    save_json(save_prop_map_json, prop_map)
+    return prop_map
 
-props['PID'] = pd.Series(new_PIDS, index=props.index)
-props.to_csv('./data/saved_properties.csv', index=False)
-print("saved properties")
-print("imported props", prop_map)
-# import items
+def save_json(json_file, dict):
+    data = json.dumps(dict)
+    with open(json_file, "w") as f:
+        f.write(data)
 
-# setup wikidata integrator
-MEDIA_WIKI_API = '$MEDIA_WIKI_API'
-SPARQL_ENDPOINT = '$SPARQL_ENDPOINT'
+def load_json(json_file):
+    if not os.path.isfile(json_file):
+        return {}
+    with open(json_file, "w") as f:
+        data = f.read()
+    return json.loads(data)
 
-login_instance = WI.wdi_login.WDLogin(
-    user='$BOT_USERNAME',
-    pwd='$BOT_PASSWORD',
-    mediawiki_api_url=MEDIA_WIKI_API
-)
-
-# helper
+# helperfunction
 def is_nan(x):
     return (x is np.nan or x != x)
 
-item_files = glob.glob('./data/items_*.csv')
-item_map = {}
+def write_item(wd_item, label, item_map, login_instance, local_id=None, standard_QID_output_file='./data/saved_items.csv'):
+    QID = wd_item.write(login_instance)
+    if not local_id == None:
+        item_map[local_id] = QID # add QID to the item_map
+    print(" "*(14-len(QID)) + QID + " : " + label) # print QID and label
+    with open(standard_QID_output_file, "a") as f:
+        f.write(QID+","+local_id+","+label+"\n") # append line to standard_QID_output_file
+    return QID
 
-for fileIndex in range(len(item_files)):
-    fileName = './data/items_' + str(fileIndex) + '.csv'
-    print("processing file ", fileName)
-    items = pd.read_csv(fileName, dtype=object)
+def import_items_from_file(csv_file, prop_map, item_map, login_instance,
+        MEDIA_WIKI_API="http://localhost:8181/w/api.php", SPARQL_ENDPOINT="http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql",):
+    items = pd.read_csv(csv_file, dtype=object)
+    local_prop_ids =    list(items.columns)[2:]  # ignore the columns id and label
 
-    local_prop_ids = list(items.columns)[2:]  # ignore the columns id and label
-    prop_types = list(map(lambda local_id: prop_map[local_id]['datatype'], local_prop_ids))
-    PIDs = list(map(lambda local_id: prop_map[local_id]['PID'], local_prop_ids))
-
-
-    new_QIDS = []
+    items.insert(0,"QID","")
     for index, row in items.iterrows():
         label = row['label']
-        if is_nan(label):
+        if label is np.nan:
             print("Ignoreing elment with no label, ", index)
             continue
-            
-        data = []
-        for prop_index, local_prop_id in enumerate(local_prop_ids):
 
-            value = row[local_prop_id]
-            if is_nan(value):
+        data = [] # statements to be given to wd_item
+        for prop in local_prop_ids:
+            if prop not in prop_map:
+                print("Property '" +prop+ "' not in prop_map, skipping property for item: "+label)
                 continue
-                
-            prop_type = prop_types[prop_index]
-            PID = PIDs[prop_index]
-            if prop_type == 'wikibase-item':
-                # we split because it can be multiple values
+            value = row[prop]
+            if value is np.nan:
+                print("Value of Property '" +prop+ "' is empty, skipping for item: "+label)
+                continue
+            prop_type = prop["datatype"]
+            prop_PID  = prop["PID"]
+            if prop_type == "wikibase-item":
+                # we split because it can be multiple values, separated by semicolon
                 values = [val.strip() for val in value.split(";")]
                 # map from local ids to QIDs
                 values = list(map(lambda _id: item_map[_id], values))
                 # create statments for these values
-                statements = list(map(lambda val: WI.wdi_core.WDItemID(value=val, prop_nr=PID), values))
+                statements = list(map(lambda val: WI.wdi_core.WDItemID(value=val, prop_nr=prop_PID), values))
                 # add to data
                 data.extend(statements)
-            elif prop_type == 'string':
-                data.append(WI.wdi_core.WDString(value=value, prop_nr=PID))
+            elif prop_type == "string":
+                data.append(WI.wdi_core.WDString(value=value, prop_nr=prop_PID))
             else:
-                print("Ignoring unknown type:", prop_type, "with value", value) 
-                # add other types here
-                
+                print("Ignoring unknown type:", prop_type, "with value", value)
+                continue
+            # add other property-types here
+
         wd_item = WI.wdi_core.WDItemEngine(
-            data=data, 
+            data=data,
             mediawiki_api_url=MEDIA_WIKI_API,
             sparql_endpoint_url=SPARQL_ENDPOINT
         )
-        
         wd_item.set_label(label)
-        # write to database
-        QID = wd_item.write(login_instance)
-        # save new QID to file and map
-        new_QIDS.append(QID)
-        local_id = row['id']
-        item_map[local_id] = QID
-        print(QID, label)
+        row["QID"] = write_item(wd_item, label, item_map, login_instance, local_id=row["id"])
 
-    # after import is done, write back to new file
-    items['QID'] = pd.Series(new_QIDS, index=items.index)
-    items.to_csv('./data/saved_items_' + str(fileIndex) + '.csv', index=False)
-    print("saved file ", './data/saved_items_' + str(fileIndex) + '.csv')
-print("import done")
+    save_to = os.path.dirname(csv_file) + "/" + "saved_" + os.path.basename(csv_file) # change saved file path here
+    items.to_csv(save_to, index=False)
+    print("Saved file: "+save_to)
 
 
-
-
+if __name__ == "__main__":
+    from parameters import BOT_USERNAME, BOT_PASSWORD, MEDIA_WIKI_API, MEDIA_WIKI_SERVER, SPARQL_ENDPOINT
+    to_import = "./data/"
+    if not os.path.exists(to_import):
+        os.makedirs(to_import)
+    property_file = './data/properties.csv'
+    if not os.path.isfile(property_file):
+        raise ValueError(property_file + "is not a valid file")
+    if os.path.isdir(to_import):
+        item_files = [os.dirname(to_import)+"/"+o for o in os.listdir(to_import) if o.endswith(".csv")] # all csv-files to be imported
+    item_map = {}
+    prop_map = import_properties()
+    login_instance = WI.wdi_login.WDLogin(
+        user='BOT_USERNAME',
+        pwd='BOT_PASSWORD',
+        mediawiki_api_url=MEDIA_WIKI_API
+    )
+    for file in item_files:
+        import_items_from_file(file, prop_map, item_map, login_instance)
+    save_json("./data/item_map.json", item_map)
+    save_json("./data/prop_map.json", prop_map)
+    print("import done")

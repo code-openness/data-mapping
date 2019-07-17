@@ -12,7 +12,7 @@ echo "Importing using the username: $BOT_USERNAME"
 echo "WARN: This script only work with a clean wikibase, ot properties or items should be in the database"
 
 echo "('$BOT_USERNAME','$BOT_PASSWORD')" > password
-envsubst < base.import.py > import.py
+envsubst < base.parameters.py > parameters.py
 envsubst < base.user-config.py > user-config.py
 
 python3 -m venv import_env
@@ -26,6 +26,6 @@ mkdir -p data
 cp -r ./cloned/sparql/sparql/*.csv ./data
 rm -r -f ./cloned
 
-python3 import.py
+python3 base.import.py
 
 deactivate
