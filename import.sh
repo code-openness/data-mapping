@@ -9,7 +9,7 @@ export MEDIA_WIKI_API=$MEDIA_WIKI_SERVER/w/api.php
 export SPARQL_ENDPOINT=http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql
 
 echo "Importing using the username: $BOT_USERNAME"
-echo "WARN: This script only work with a clean wikibase, ot properties or items should be in the database"
+echo "WARN: This script only work with a clean wikibase, no properties or items should be in the database"
 
 echo "('$BOT_USERNAME','$BOT_PASSWORD')" > password
 envsubst < base_parameters.py > parameters.py

@@ -27,5 +27,5 @@ if __name__ == "__main__":
     item_map = load_json(sys.argv[2])
     login_instance = WI.wdi_login.WDLogin(user=BOT_USERNAME, pwd=BOT_PASSWORD, mediawiki_api_url=MEDIA_WIKI_API)
     import_items_from_file(sys.argv[3], prop_map, item_map, login_instance)
-    save_json("./data/item_map.json", item_map)
+    save_json(sys.argv[2], item_map)
     print("[Import done]")
