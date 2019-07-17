@@ -149,7 +149,7 @@ if __name__ == "__main__":
     if not os.path.isfile(property_file):
         raise ValueError(property_file + "is not a valid file")
     if os.path.isdir(to_import):
-        item_files = [os.path.dirname(to_import)+"/"+o for o in os.listdir(to_import) if o.endswith(".csv")] # all csv-files to be imported
+        item_files = sorted([os.path.dirname(to_import)+"/"+o for o in os.listdir(to_import) if o.endswith(".csv")]) # all csv-files to be imported
     item_map = {}
     if "-noprop" in param:
         prop_map = load_json("./data/prop_map.json")
@@ -162,6 +162,7 @@ if __name__ == "__main__":
     )
     for file in item_files:
         import_items_from_file(file, prop_map, item_map, login_instance)
+        save_json("./data/item_map.json", item_map)
     save_json("./data/item_map.json", item_map)
     save_json("./data/prop_map.json", prop_map)
     print("import done")

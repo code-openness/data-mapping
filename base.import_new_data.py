@@ -21,7 +21,7 @@ if __name__ == "__main__":
         raise ValueError("You have to give 2 Parameters")
     for i in range(1,4):
         if not os.path.isfile(sys.argv[i]):
-            raise ValueError("Parameter "+i+" is not a valid file")
+            raise ValueError("Parameter "+sys.argv[i]+" is not a valid file")
     prop_map = load_json(sys.argv[1])
     item_map = load_json(sys.argv[2])
     login_instance = WI.wdi_login.WDLogin(user=BOT_USERNAME, pwd=BOT_PASSWORD, mediawiki_api_url=MEDIA_WIKI_API)
