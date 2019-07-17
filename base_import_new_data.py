@@ -9,6 +9,7 @@ import wikidataintegrator as WI
 import sys, os
 from pathlib import Path
 from parameters import BOT_USERNAME, BOT_PASSWORD, MEDIA_WIKI_API, MEDIA_WIKI_SERVER, SPARQL_ENDPOINT
+from base_import import *
 
 if __name__ == "__main__":
     if len(sys.argv)<4:
@@ -27,4 +28,4 @@ if __name__ == "__main__":
     login_instance = WI.wdi_login.WDLogin(user=BOT_USERNAME, pwd=BOT_PASSWORD, mediawiki_api_url=MEDIA_WIKI_API)
     import_items_from_file(sys.argv[3], prop_map, item_map, login_instance)
     save_json("./data/item_map.json", item_map)
-    print("import done")
+    print("[Import done]")

@@ -60,6 +60,7 @@ def save_json(json_file, dict):
     data = json.dumps(dict)
     with open(json_file, "w") as f:
         f.write(data)
+    print("[Wrote JSON] "+json_file)
 
 def load_json(json_file):
     if not os.path.isfile(json_file):
@@ -77,7 +78,7 @@ def write_item(wd_item, label, item_map, login_instance, local_id=None,
     QID = wd_item.write(login_instance)
     if not local_id == None:
         item_map[local_id] = QID # add QID to the item_map
-    print(" "*(14-len(QID)) + QID + " : " + label) # print QID and label
+    print("[Item added] "+ QID +" "*(14-len(QID)) + " : " + label) # print QID and label
     with open(standard_QID_output_file, "a") as f:
         f.write(QID+","+local_id+","+label+"\n") # append line to standard_QID_output_file
     return QID
@@ -86,24 +87,28 @@ def import_items_from_file(csv_file, prop_map, item_map, login_instance,
         MEDIA_WIKI_API="http://localhost:8181/w/api.php",
         SPARQL_ENDPOINT="http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql",):
     items = pd.read_csv(csv_file, dtype=object)
+    print("[Import started] Started import for file: "+csv_file+" with "+str(items.shape[0])+" items")
     local_prop_ids =    list(items.columns)[2:]  # ignore the columns id and label
+    for prop in local_prop_ids:
+        if prop not in prop_map:
+            print("[Property unavailable] Property '" +prop+ "' not in prop_map, skipped for all items.")
+            print(prop_map)
+            continue
 
     items.insert(0,"QID","")
     for index, row in items.iterrows():
         label = row['label']
         if label is np.nan:
-            print("Ignoreing elment with no label, ", index)
+            print("[No Item Label] Ignoreing elment with no label, index: "+str(index))
             continue
 
         data = [] # statements to be given to wd_item
         for prop in local_prop_ids:
             if prop not in prop_map:
-                print("Property '" +prop+ "' not in prop_map, skipping property for item: "+label)
-                print(prop_map)
                 continue
             value = row[prop]
             if value is np.nan:
-                print("Value of Property '" +prop+ "' is empty, skipping for item: "+label)
+                print("[Empty Property Value] Value of Property '" +prop+ "' is empty, skipping for item: "+str(index)+": "+label)
                 continue
             prop_type = prop_map[prop]["datatype"]
             prop_PID  = prop_map[prop]["PID"]
@@ -119,22 +124,22 @@ def import_items_from_file(csv_file, prop_map, item_map, login_instance,
             elif prop_type == "string":
                 data.append(WI.wdi_core.WDString(value=value, prop_nr=prop_PID))
             else:
-                print("Ignoring unknown type:", prop_type, "with value", value)
+                print("[Undefined Property-type] Undefined action for property-type: "+ prop_type +" with value "+ value +"in item: "+ str(index) +": "+ label)
                 continue
             # add other property-types here
 
         wd_item = WI.wdi_core.WDItemEngine(
             data=data,
             mediawiki_api_url=MEDIA_WIKI_API,
-            #sparql_endpoint_url=SPARQL_ENDPOINT
-            core_props="P1", new_item=True
+            sparql_endpoint_url=SPARQL_ENDPOINT
+            #core_props="P1", new_item=True # leave commented, for testing only
         )
         wd_item.set_label(label)
         row["QID"] = write_item(wd_item, label, item_map, login_instance, local_id=row["id"])
 
     save_to = os.path.dirname(csv_file) + "/" + "saved_" + os.path.basename(csv_file) # change saved file path here
     items.to_csv(save_to, index=False)
-    print("Saved file: "+save_to)
+    print("[Saved file] "+save_to)
 
 
 if __name__ == "__main__":
@@ -149,7 +154,7 @@ if __name__ == "__main__":
     if not os.path.isfile(property_file):
         raise ValueError(property_file + "is not a valid file")
     if os.path.isdir(to_import):
-        item_files = sorted([os.path.dirname(to_import)+"/"+o for o in os.listdir(to_import) if o.endswith(".csv")]) # all csv-files to be imported
+        item_files = sorted(glob.glob(to_import+"items_*.csv")) # all csv-files to be imported
     item_map = {}
     if "-noprop" in param:
         prop_map = load_json("./data/prop_map.json")
@@ -165,4 +170,4 @@ if __name__ == "__main__":
         save_json("./data/item_map.json", item_map)
     save_json("./data/item_map.json", item_map)
     save_json("./data/prop_map.json", prop_map)
-    print("import done")
+    print("[Import done]")
