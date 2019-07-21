@@ -9,18 +9,47 @@ import wikidataintegrator as WI
 import sys, os
 from pathlib import Path
 
+"""
+Read the Documentation on github for more explanation.
+https://code-openness.github.io/
+"""
 
-# overwrite the wait function
-def wait(self, secs):
-    pass
 
-pywikibot.throttle.Throttle.wait = wait
-site = pywikibot.Site('wikidata', 'wikidata')
-site.login()
+"""
+* saves a dictionary to a file
+json_file:  String of file path
+dict:       Dictionary that will be saved
+"""
+def save_json(json_file, dict):
+    data = json.dumps(dict)
+    with open(json_file, "w") as f:
+        f.write(data)
+    print("[Wrote JSON] "+json_file)
 
-# import properties
-def import_properties(load_from_csv_file='./data/properties.csv',
-        save_csv_file='./data/saved_properties.csv', save_prop_map_json="./data/prop_map.json"):
+"""
+* loads a dictionary from a file
+json_file:  String of file that is loaded
+return:=    dictionary of file content
+"""
+def load_json(json_file):
+    if not os.path.isfile(json_file):
+        return {}
+    with open(json_file, "r") as f:
+        data = f.read()
+    return json.loads(data)
+
+"""
+* imports properties into wikibase
+site:               pywikibot.Site of the wikibase
+load_from_csv_file: String of file path where properties are imported from
+save_csv_file:      String of file path where csv with resulting PID is saved
+save_prop_map_json: String of file path where properties are stored as dictionary
+return:=            dictionary that maps local property id to PID
+"""
+def import_properties(site, load_from_csv_file='./data/properties.csv',
+        save_csv_file=None, save_prop_map_json="./data/prop_map.json"):
+    if save_csv_file==None:
+        save_csv_file = load_from_csv_file
     prop_map = {}
     props = pd.read_csv(load_from_csv_file, dtype=object)
 
@@ -56,33 +85,37 @@ def import_properties(load_from_csv_file='./data/properties.csv',
     save_json(save_prop_map_json, prop_map)
     return prop_map
 
-def save_json(json_file, dict):
-    data = json.dumps(dict)
-    with open(json_file, "w") as f:
-        f.write(data)
-    print("[Wrote JSON] "+json_file)
-
-def load_json(json_file):
-    if not os.path.isfile(json_file):
-        return {}
-    with open(json_file, "r") as f:
-        data = f.read()
-    return json.loads(data)
-
-# helperfunction
-def is_nan(x):
-    return (x is np.nan or x != x)
-
-def write_item(wd_item, label, item_map, login_instance, local_id=None,
-        standard_QID_output_file='./data/saved_items.csv'):
+"""
+* writes a WDItemEngine to wikibase
+wd_item:                    WDItemEngine that is to be written
+label:                      label of the item (for printing result in console only)
+item_map:                   dictionary that maps local item ids to QIDs
+login_instance:             WDLogin instance of wikidataintegrator
+local_id:                   local item id that is to be mapped to its QID
+standard_QID_output_file:   String of file path where results are logged
+return:=                    QID
+"""
+def write_item(wd_item, label, login_instance, item_map={}, local_id=None,
+        standard_QID_output_file=None):
     QID = wd_item.write(login_instance)
     if not local_id == None:
         item_map[local_id] = QID # add QID to the item_map
     print("[Item added] "+ QID +" "*(14-len(QID)) + " : " + label) # print QID and label
-    with open(standard_QID_output_file, "a") as f:
-        f.write(QID+","+local_id+","+label+"\n") # append line to standard_QID_output_file
+    if not standard_QID_output_file==None:
+        if os.path.isfile(standard_QID_output_file) or os.path.isdir(os.path.dirname(standard_QID_output_file)):
+            with open(standard_QID_output_file, "a") as f:
+                f.write(QID+","+local_id+","+label+"\n") # logs the result
     return QID
 
+"""
+* imports items from csv file
+csv_file:           String of file path where items should be imported from
+prop_map:           dictionary that maps local property ids to dictionary with keys {datatype, PIDs}
+item_map:           dictionary that maps local item ids to QIDs
+login_instance:     WDLogin instance of wikidataintegrator
+MEDIA_WIKI_API:     String of wiki api url
+SPARQL_ENDPOINT:    String of sparql endpoint url
+"""
 def import_items_from_file(csv_file, prop_map, item_map, login_instance,
         MEDIA_WIKI_API="http://localhost:8181/w/api.php",
         SPARQL_ENDPOINT="http://localhost:8282/proxy/wdqs/bigdata/namespace/wdq/sparql",):
@@ -147,19 +180,28 @@ if __name__ == "__main__":
     if len(sys.argv)>1:
         param = sys.argv[1]
     from parameters import BOT_USERNAME, BOT_PASSWORD, MEDIA_WIKI_API, MEDIA_WIKI_SERVER, SPARQL_ENDPOINT
+
     to_import = "./data/"
-    if not os.path.exists(to_import):
-        os.makedirs(to_import)
     property_file = './data/properties.csv'
-    if not os.path.isfile(property_file):
-        raise ValueError(property_file + "is not a valid file")
-    if os.path.isdir(to_import):
-        item_files = sorted(glob.glob(to_import+"items_*.csv")) # all csv-files to be imported
     item_map = {}
-    if "-noprop" in param:
+    def wait(self, secs):# to overwrite the wait function
+        pass
+    pywikibot.throttle.Throttle.wait = wait
+    site = pywikibot.Site('wikidata', 'wikidata')
+    site.login()
+
+    if not os.path.isdir(to_import):
+        raise ValueError(to_import + "is not a valid directory") # check if data/properties.csv exists
+    if not os.path.isfile(property_file):
+        raise ValueError(property_file + "is not a valid file") # check if data/properties.csv exists
+
+    item_files = sorted(glob.glob(to_import+"items_*.csv")) # all csv-files to be imported, sorted
+
+    if "-noprop" in param: # if -noprop in parameter 1 then load property from json file, when properties in wikibase but no items
         prop_map = load_json("./data/prop_map.json")
     else:
-        prop_map = import_properties()
+        prop_map = import_properties(site)
+
     login_instance = WI.wdi_login.WDLogin(
         user=BOT_USERNAME,
         pwd=BOT_PASSWORD,
