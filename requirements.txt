@@ -10,7 +10,7 @@ numpy==1.16.4
 oauthlib==3.0.1
 pandas==0.24.2
 PyJSG==0.9.1
-PyJWT==1.7.1
+PyJWT==2.4.0
 pyparsing==2.3.1
 PyShEx==0.7.10
 PyShExC==0.7.0
