@@ -6,7 +6,7 @@ idna==2.8
 isodate==0.6.0
 jsonasobj==1.2.1
 mwoauth==0.3.3
-numpy==1.16.4
+numpy==1.22.0
 oauthlib==3.0.1
 pandas==0.24.2
 PyJSG==0.9.1
