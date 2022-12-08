@@ -1,5 +1,5 @@
 antlr4-python3-runtime==4.7.2
-certifi==2019.3.9
+certifi==2022.12.7
 CFGraph==0.2.1
 chardet==3.0.4
 idna==2.8
